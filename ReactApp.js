@@ -1,5 +1,19 @@
+/****
+ * jwt authentication
+ * incorporate users online feature (number of active jwt tokens, app refreshes it long as user
+ * is signed in every 3 minutes to recieve a new jws token, use uniqid)
+ * replace cdns with modules
+ * favicon
+ * 
+ * react, javascript, babel, jsx, axios
+ * node, express, jwt auth
+ */
+
+
+'use strict';
+
 class AppHeader extends React.Component {
-	// header componet to contain navbar or # of users online
+	// header componet to contain navbar and # of users online
 	constructor(props) {
 		super(props);
 		this.state = {
@@ -24,71 +38,47 @@ class AppHeader extends React.Component {
 }
 
 class ChatBox extends React.Component {
-	// chat box componet will make calls to the api to get the latest comments using a timer
+	// chat box componet will the latest comments using the state in UserDataComponent
 	constructor(props) {
 		super(props);
+		this.scrollToBottom = this.scrollToBottom.bind(this);
+		this.messagesEndRef = React.createRef()
 		this.state = {
-			colors: [
-				'#60b748', '#177ceb', '#05b6c1', '#9e9e9e', '#ffc107', '#f0e42c', '#059688', '#e21b3c', '#d3709e', '#dc6b25', '#f7ffff'
-			],
-			comments: [
-				{username: 'testname', color: 0, message: 'blah aslkgj sdklfls jlsdkj hghh'},
-				{username: 'testname', color: 0, message: 'blah aslkgj sdklfls jlsdkj hghh'},
-				{username: 'testname', color: 0, message: 'blah aslkgj sdklfls jlsdkj hghh'},
-				{username: 'testname', color: 0, message: 'blah aslkgj sdklfls jlsdkj hghh'},
-				{username: 'testname2', color: 1, message: 'fdsg  fddsfg dsfg  dsfg dfgdf d gsfg'},
-				{username: 'testname3', color: 2, message: 'fdghsad sdsfgd fdg dh dhfdghh'},
-				{username: 'testname', color: 0, message: 'blah aslkgj sdklfls jlsdkj hghh'},
-				{username: 'testname2', color: 1, message: 'fdsg  fddsfg dsfg  dsfg dfgdf d gsfg'},
-				{username: 'testname3', color: 2, message: 'fdghsad sdsfgd fdg dh dhfdghh'},
-				{username: 'testname', color: 0, message: 'blah aslkgj sdklfls jlsdkj hghh'},
-				{username: 'testname2', color: 1, message: 'fdsg  fddsfg dsfg  dsfg dfgdf d gsfg'},
-				{username: 'testname3', color: 6, message: 'fdghsad sdsfgd fdg dh dhfdghh'},
-				{username: 'testname', color: 7, message: 'blah aslkgj sdklfls jlsdkj hghh'},
-				{username: 'testname2', color: 8, message: 'fdsg  fddsfg dsfg  dsfg dfgdf d gsfg'},
-				{username: 'testname3', color: 9, message: 'fdghsad sdsfgd fdg dh dhfdghh'},
-				{username: 'testname', color: 10, message: 'blah aslkgj sdklfls jlsdkj hghh'},
-				{username: 'testname2', color: 1, message: 'fdsg  fddsfg dsfg  dsfg dfgdf d gsfg'},
-				{username: 'testname3', color: 2, message: 'fdghsad sdsfgd fdg dh dhfdghh'},
-				{username: 'testname', color: 6, message: 'blah aslkgj sdklfls jlsdkj hghh'},
-				{username: 'testname2', color: 10, message: 'fdsg  fddsfg dsfg  dsfg dfgdf d gsfg'},
-				{username: 'testname3', color: 9, message: 'fdghsad sdsfgd fdg dh dhfdghh'},
-				{username: 'testname', color: 8, message: 'blah aslkgj sdklfls jlsdkj hghh'},
-				{username: 'testname2', color: 7, message: 'fdsg  fddsfg dsfg  dsfg dfgdf d gsfg'},
-				{username: 'testname3', color: 6, message: 'fdghsad sdsfgd fdg dh dhfdghh'},
-				{username: 'testname', color: 5, message: 'blah aslkgj sdklfls jlsdkj hghh'},
-				{username: 'testname2', color: 4, message: 'fdsg  fddsfg dsfg  dsfg dfgdf d gsfg'},
-				{username: 'testname3', color: 3, message: 'fdghsad sdsfgd fdg dh dhfdghh'},
-				{username: 'testname', color: 0, message: 'blah aslkgj sdklfls jlsdkj hghh'},
-				{username: 'testname2', color: 1, message: 'fdsg  fddsfg dsfg  dsfg dfgdf d gsfg'},
-				{username: 'TheseAreAll_Fit', color: 2, message: 'The welcome modal will render if there isnt a username in state or if something is missing. Will contain a welcome heading, the modal container box, and will opaque the background, and a button that on change hides the modal'},
-			]
+		
 		}
 	}
 
+	scrollToBottom() {
+		this.messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+	}
+	  
+
+
 	render() {
-		let comments = this.state.comments.concat();
+		let comments = this.props.comments;
 		let mappedComments = comments.map((comment) => (
-			<div id="comment-row" className="row pt-2">
+			<div id="comment-row" className="row pt-1" key={comment.id}>
 				<div className="col-md-2">
-					<div className="pl-4" style={ {color: this.state.colors[comment.color]} }><strong>{ comment.username }:</strong></div>
+					<div className="pl-4" style={ {color: comment.color} }><strong>{ comment.username }:</strong></div>
 				</div>
 				<div className="col-md-10">
-					<div id="comment-message" className="pl-3 mr-2">{ comment.message }</div>
+					<div id="comment-message" className="pl-3 mr-2">{ comment.comment }</div>
 				</div>
 			</div>
 		));
+
 		
 		return (
-			<div id="chatbox" className="container-xl pb-2">
+			<div id="chatbox" className="container-xl">
 				{ mappedComments }
+				<div id="scroll-to-bottom-div" style={{ height: "7px" }} ref={this.messagesEndRef}></div>
 			</div>
 		);
 	}
 }
 
 class CommentBox extends React.Component {
-	// will contain the components of the input box and the submit button. Will have state of message
+	// contains the components of the input box and the submit button. 
 	constructor(props) {
 		super(props);
 		this.handleCommentChange = this.handleCommentChange.bind(this);
@@ -108,7 +98,27 @@ class CommentBox extends React.Component {
 	}
 
 	handleSubmit() {
-		console.log(this.props, this.state.comment)
+		// post the comment data to the back end
+		
+		let commentObj = {
+			comment: this.state.comment,
+			username: this.props.username,
+			color: this.props.color
+		}
+
+		
+		axios.post('/submitComment', commentObj)
+		.then(res => {
+			
+			if (res.data == 'success') {
+				// get the new comment into the state so we dont have to wait for the timer
+				this.props.addCommentToState(commentObj);
+			}
+		}).catch(err => {
+			console.log(err);
+			alert('There has been an error, try refreshing your browser.');
+		});
+
 		this.clearCommentInput();
 	}
 
@@ -142,11 +152,11 @@ function CommentInput(props) {
 	}
 
 
-	return <input type="text" className="form-control w-100" placeholder="Write a comment" onChange={handleChange} value={props.comment} onKeyPress={handleKeyPress} maxlength="225"/>;
+	return <input type="text" className="form-control w-100" placeholder="Write a comment" onChange={handleChange} value={props.comment} onKeyPress={handleKeyPress} maxLength="225"/>;
 }
 
 function CommentSubmitButton(props) {
-	// a component of the CommentBox that will onClick make an api call to the back end with the message, username, and color, then on success will clear the comment input state
+	// a component of the CommentBox that will onClick make an api call to the back end with the message, username, and color, then on success will clear the comment input state NOTE: moved to commentbox
 
 	function handleSubmitClick() {
 		props.handleSubmit();
@@ -156,14 +166,14 @@ function CommentSubmitButton(props) {
 }
 
 class WelcomeModal extends React.Component {
-	// The welcome modal will render if there isnt a username in state or if something is missing. Will contain a welcome heading, the modal container box, and will opaque the background, and a button that on change hides the modal.
+	// The welcome modal will render if there isnt a username in state or the user clicks the settings button. Will contain a welcome heading, the modal container box, and will opaque the background, and a button that on change hides the modal.
 	constructor(props) {
 		super(props);
 		this.handleColorClick = this.handleColorClick.bind(this);
 		this.handleUsernameChange = this.handleUsernameChange.bind(this);
 		this.state = {
 			isValid: false,
-			welcomeMessage: 'Welcome to Chat App!'
+			welcomeMessage: <h3 className="py-2">Welcome to Chat App!</h3>
 		};
 	}
 
@@ -175,7 +185,7 @@ class WelcomeModal extends React.Component {
 		//lift up state
 		this.props.handleUsernameChange(e);
 
-		// check the validity of the username and then toggleNOTE: Same checks are in WelcomeModalNote
+		// check the validity of the username and then toggle NOTE: Same checks are in WelcomeModalNote
 		let username = e.target.value;
 		let regex = /\W/gi;
 
@@ -193,7 +203,7 @@ class WelcomeModal extends React.Component {
 	componentDidMount() {
 		// On component mount, change the welcome message & enable button
 		if (this.props.username != '') {
-			this.setState({welcomeMessage: 'Chat Settings'})
+			this.setState({welcomeMessage: <h3 className="py-2">Chat Settings</h3>})
 			this.setState({isValid: true});
 		}
 	}
@@ -206,8 +216,8 @@ class WelcomeModal extends React.Component {
 		return (
 			<div className="modal-mask">
 				<div className="modal-wrapper">
-					<div className="modal-container text-center">
-						<h4 className="py-2">{ welcomeMessage }</h4>
+					<div className="modal-container text-center text-dark">
+						{ welcomeMessage }
 						<WelcomeModalUsername username={username} handleUsernameChange={this.handleUsernameChange}/>
 						<WelcomeModalColor color={color} handleColorClick={this.handleColorClick}/>
 						<br />
@@ -237,18 +247,13 @@ function WelcomeModalUsername(props) {
 function WelcomeModalColor(props) {
 	// a component of the welcome modal that will on change, change the color in state in the UserDataComponent
 	const colorArray = [
-		'#60b748', '#177ceb', '#05b6c1', '#9e9e9e', '#ffc107', '#f0e42c', '#059688', '#e21b3c', '#d3709e', '#dc6b25', '#f7ffff'
+		'#60b748', '#177ceb', '#05b6c1', '#9e9e9e', '#ffc107', '#f0e42c', '#059688', '#e21b3c', '#d3709e', '#dc6b25', '#f7ffff' // NOTE: copy of array in UserDataComponent
 	];
 	let stateColor = props.color;
 	let colorList = colorArray.map((color) => (
 		<ColorBox key={color} handleColorClick={handleColorClick} color={color} stateColor={stateColor}></ColorBox>
 	));
 
-	// make the color random on load
-	if (stateColor == '') {
-		let rand = Math.floor((Math.random() * (colorArray.length)));
-		handleColorClick(colorArray[rand], null);
-	}
 
 	function handleColorClick(color, e) {
 		props.handleColorClick(color, e);
@@ -267,60 +272,12 @@ function WelcomeModalColor(props) {
 
 function ColorBox(props) {
 	// the little color box that will be shown in the modal
-	let shadow = (props.stateColor == props.color) ? '0px 0px 7px blue' : null;
+	let shadow = (props.stateColor == props.color) ? '0px 0px 9px blue' : null;
 	let border = (props.stateColor == props.color) ? 'blue' : 'black';
 
 	return <div style={{backgroundColor: props.color, boxShadow: shadow, borderColor: border}} className="color-box mr-2" onClick={e => props.handleColorClick(props.color,e)} value={props.color}></div>
 }
 
-class UserDataComponent extends React.Component {
-	//this component is a wrapper for the app which will contain the common user state
-	constructor(props) {
-		super(props);
-		this.enterClick = this.enterClick.bind(this);
-		this.settingsClick = this.settingsClick.bind(this);
-		this.colorClick = this.colorClick.bind(this);
-		this.usernameChange = this.usernameChange.bind(this);
-		this.state = {
-			username: '',
-			color: '',
-			showModal: true
-		};
-	}
-
-	enterClick() {
-		this.setState({showModal: false});
-	}
-
-	settingsClick() {
-		this.setState({showModal: true});
-	}
-
-	colorClick(color, e) {
-		this.setState({'color': color});
-	}
-
-	usernameChange(e) {
-		this.setState({username: e.target.value})
-	}
-
-
-	render() {
-		let modal;
-		let showModal = this.state.showModal;
-		if (showModal) {
-			modal = <WelcomeModal enterClick={this.enterClick} username={this.state.username} color={this.state.color} colorClick={this.colorClick} handleUsernameChange={this.usernameChange}/>;
-		}
-		return (
-			<div>
-				<AppHeader settingsClick={this.settingsClick}/>
-				<ChatBox />
-				<CommentBox color={this.state.color} username={this.state.username}/>
-				{ modal }
-			</div>
-		);
-	}
-}
 
 function WelcomeModalNote(props) {
 	let username = props.username;
@@ -343,6 +300,108 @@ function WelcomeModalButton(props) {
 	
 	return <button className="btn btn-primary mt-2" onClick={props.enterClick} disabled={!props.isValid}>Go to chat!</button>;
 }
+
+
+class UserDataComponent extends React.Component {
+	//this component is a wrapper for the app which will contain the common user state
+	constructor(props) {
+		super(props);
+		this.enterClick = this.enterClick.bind(this);
+		this.settingsClick = this.settingsClick.bind(this);
+		this.colorClick = this.colorClick.bind(this);
+		this.usernameChange = this.usernameChange.bind(this);
+		this.getComments = this.getComments.bind(this);
+		this.addCommentToState = this.addCommentToState.bind(this);
+		this.chatBoxRef = React.createRef();
+		this.colorArray = [
+			'#60b748', '#177ceb', '#05b6c1', '#9e9e9e', '#ffc107', '#f0e42c', '#059688', '#e21b3c', '#d3709e', '#dc6b25', '#f7ffff' // NOTE: copy of array in WelcomeModalColors component
+		],
+		this.state = {
+			username: '',
+			// make the color random on load
+			color: this.colorArray[Math.floor((Math.random() * (this.colorArray.length)))],
+			comments: [],
+			showModal: true,
+		};
+	}
+
+	enterClick() {
+		this.setState({showModal: false});
+	}
+
+	settingsClick() {
+		this.setState({showModal: true});
+	}
+
+	colorClick(color, e) {
+		this.setState({'color': color});
+	}
+
+	usernameChange(e) {
+		this.setState({username: e.target.value})
+	}
+
+	componentDidMount() {
+		//lifecycle hook that will continuously call the function that makes an api call to the back end and re-renderes the updated state every 3 seconds
+		
+		setInterval(
+			() => this.getComments(),
+			3000
+		);
+
+		//On component mount, make the first call to populate comments
+		this.getComments();
+	}
+
+	getComments() {
+		axios.get('/getComments')
+		.then(res => {
+			let data = res.data;
+
+			// only update the state if it is different from the last (new comments). this prevents the chat from scrolling to the bottom while the user is reading prevs
+			if (this.state.comments.length > 2) {
+				if (this.state.comments[0].id != data[0].id) {
+					this.setState({comments: data});
+
+					// use a timout function on scrollToBottom so that state has time to update this prevents the chat from scrolling to the comment above newest
+					setTimeout(() => {this.chatBoxRef.current.scrollToBottom()}, 1000)
+				}
+			} else {
+				// populate the chat box with comments for the first time
+				this.setState({comments: data});
+				this.chatBoxRef.current.scrollToBottom();
+			}
+			
+		})
+		.catch(err => {console.log(err)});
+	}
+
+	addCommentToState(commentObj) {
+		// use callback function as setState arguement with state as the argument to add the recently submitted comment to show in the chatbox without delay
+		commentObj.id = Math.random(); // a temporary id so that react can have a key
+		this.setState((state) => {
+			return this.state.comments.push(commentObj);
+		})
+		this.chatBoxRef.current.scrollToBottom();
+	}
+
+	render() {
+		let modal;
+		let showModal = this.state.showModal;
+		if (showModal) {
+			modal = <WelcomeModal enterClick={this.enterClick} username={this.state.username} color={this.state.color} colorClick={this.colorClick} handleUsernameChange={this.usernameChange}/>;
+		}
+		return (
+			<div>
+				<AppHeader settingsClick={this.settingsClick}/>
+				<ChatBox comments={this.state.comments} colorArray={this.colorArray} ref={this.chatBoxRef}/>
+				<CommentBox color={this.state.color} username={this.state.username} addCommentToState={this.addCommentToState}/>
+				{ modal }
+			</div>
+		);
+	}
+}
+
 
 // find the html element and render the button
 const domContainer = document.querySelector('#app');
