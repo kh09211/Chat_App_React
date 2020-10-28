@@ -1,12 +1,8 @@
 /****
- * jwt authentication
- * incorporate users online feature (number of active jwt tokens, app refreshes it long as user
- * is signed in every 3 minutes to recieve a new jws token, use uniqid)
+ * jwt authentication started for publication
  * replace cdns with modules
- * favicon
  * 
- * react, javascript, babel, jsx, axios
- * node, express, jwt auth
+ 
  */
 
 
@@ -16,9 +12,6 @@ class AppHeader extends React.Component {
 	// header componet to contain navbar and # of users online
 	constructor(props) {
 		super(props);
-		this.state = {
-			numberOnline: 4
-		};
 	}
 
 	render() {
@@ -30,7 +23,7 @@ class AppHeader extends React.Component {
 						<div className="h4 text-light ml-2">Chat App</div>
 						<div id="settings-button" className="ml-4 text-light" onClick={this.props.settingsClick}><i className="fas fa-user-cog pt-1"></i></div>
 					</div>
-					<div className="text-right text-light mr-2">Active Users: { this.state.numberOnline }</div>
+					<div className="text-right text-light mr-2">Active Users: { this.props.activeUsers }</div>
 				</div>
 			</div>
 		);
@@ -173,7 +166,7 @@ class WelcomeModal extends React.Component {
 		this.handleUsernameChange = this.handleUsernameChange.bind(this);
 		this.state = {
 			isValid: false,
-			welcomeMessage: <h3 className="py-2">Welcome to Chat App!</h3>
+			welcomeMessage: <h4 className="py-2">Welcome to Chat App!</h4>
 		};
 	}
 
@@ -312,6 +305,7 @@ class UserDataComponent extends React.Component {
 		this.usernameChange = this.usernameChange.bind(this);
 		this.getComments = this.getComments.bind(this);
 		this.addCommentToState = this.addCommentToState.bind(this);
+		this.getToken = this.getToken.bind(this);
 		this.chatBoxRef = React.createRef();
 		this.colorArray = [
 			'#60b748', '#177ceb', '#05b6c1', '#9e9e9e', '#ffc107', '#f0e42c', '#059688', '#e21b3c', '#d3709e', '#dc6b25', '#f7ffff' // NOTE: copy of array in WelcomeModalColors component
@@ -322,6 +316,8 @@ class UserDataComponent extends React.Component {
 			color: this.colorArray[Math.floor((Math.random() * (this.colorArray.length)))],
 			comments: [],
 			showModal: true,
+			token: '',
+			activeUsers: 0
 		};
 	}
 
@@ -349,8 +345,18 @@ class UserDataComponent extends React.Component {
 			3000
 		);
 
+		//lifecycle hook that will get a new api key every 5 minutes also then refresh the active users integer
+		
+		setInterval(
+			() => this.getToken(),
+			5 * 60 * 1000
+		);
+
 		//On component mount, make the first call to populate comments
 		this.getComments();
+
+		// make the first api call to get a token
+		this.getToken();
 	}
 
 	getComments() {
@@ -385,6 +391,12 @@ class UserDataComponent extends React.Component {
 		this.chatBoxRef.current.scrollToBottom();
 	}
 
+	getToken() {
+		// function will api call the back end at /getToken and the api will return either the same token or a fresh one along with the currently active users. Set state of both
+
+		let token = this.state.token;
+	}
+
 	render() {
 		let modal;
 		let showModal = this.state.showModal;
@@ -393,7 +405,7 @@ class UserDataComponent extends React.Component {
 		}
 		return (
 			<div>
-				<AppHeader settingsClick={this.settingsClick}/>
+				<AppHeader settingsClick={this.settingsClick} activeUsers={this.state.activeUsers}/>
 				<ChatBox comments={this.state.comments} colorArray={this.colorArray} ref={this.chatBoxRef}/>
 				<CommentBox color={this.state.color} username={this.state.username} addCommentToState={this.addCommentToState}/>
 				{ modal }
