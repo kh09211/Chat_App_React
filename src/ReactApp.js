@@ -1,12 +1,16 @@
 /****
  * jwt authentication started for publication
- * replace cdns with modules
+ * count dates of expired tokens and remove
+ * switch to production cdn 10 second job
+ * improve regex to allow for everything but start and end with a space?
+ * App Ready for deployment!! Anything more will need create-react-app and redux or vuex
  * 
- 
+ * The Chat App written by programmer Kyle Hopkins using React, Node, and Express
  */
 
 
 'use strict';
+
 
 class AppHeader extends React.Component {
 	// header componet to contain navbar and # of users online
@@ -180,7 +184,7 @@ class WelcomeModal extends React.Component {
 
 		// check the validity of the username and then toggle NOTE: Same checks are in WelcomeModalNote
 		let username = e.target.value;
-		let regex = /\W/gi;
+		let regex = /^\s|[^A-Za-z0-9\s_]|\s$/g;
 
 		if (username.length < 3) {
 			this.setState({isValid: false});
@@ -232,7 +236,7 @@ function WelcomeModalUsername(props) {
 	return (
 	<div className="mt-3">
 		<label>Choose a Username </label>
-		<input type="text" value={props.username} className="form-control" onChange={handleUsernameChange}/>
+		<input type="text" value={props.username} className="form-control" onChange={handleUsernameChange} maxLength="15"/>
 	</div>
 	)
 }
@@ -274,7 +278,7 @@ function ColorBox(props) {
 
 function WelcomeModalNote(props) {
 	let username = props.username;
-	let regex = /\W/gi;
+	let regex = /^\s|[^A-Za-z0-9\s_]|\s$/g;
 
 	//NOTE: same test written in the WelcomeModal
 	if (username.length < 3 && username != '') {
@@ -282,7 +286,7 @@ function WelcomeModalNote(props) {
 	} else if (username.length > 15) {
 		return <div className="text-danger mt-1">Username must not exceed 15 characters in length</div>
 	} else if (regex.test(username) && username != '') {	
-		return <div className="text-danger mt-1">Username cannot contain special characters or spaces</div>
+		return <div className="text-danger mt-1">Name cannot start or end with a space nor contain special chars</div>
 	} else {
 		return null;
 	}
