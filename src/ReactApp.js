@@ -1,15 +1,18 @@
 /****
- * jwt authentication started for publication
- * count dates of expired tokens and remove
+ * 
+ * Cant pick the username of an active user
+ * active users flexbox with a gutter, mobile view will have something different or one...
  * switch to production cdn 10 second job
- * improve regex to allow for everything but start and end with a space?
- * App Ready for deployment!! Anything more will need create-react-app and redux or vuex
+ * 
  * 
  * The Chat App written by programmer Kyle Hopkins using React, Node, and Express
  */
 
 
 'use strict';
+
+// Declare global variables
+var tokenTimer;
 
 
 class AppHeader extends React.Component {
@@ -27,7 +30,7 @@ class AppHeader extends React.Component {
 						<div className="h4 text-light ml-2">Chat App</div>
 						<div id="settings-button" className="ml-4 text-light" onClick={this.props.settingsClick}><i className="fas fa-user-cog pt-1"></i></div>
 					</div>
-					<div className="text-right text-light mr-2">Active Users: { this.props.activeUsers }</div>
+					<div className="text-right text-light mr-2">Active Users: { this.props.activeUsers.length }</div>
 				</div>
 			</div>
 		);
@@ -98,8 +101,9 @@ class CommentBox extends React.Component {
 		// post the comment data to the back end
 		
 		let commentObj = {
-			comment: this.state.comment,
 			username: this.props.username,
+			comment: this.state.comment,
+			token: this.props.token,
 			color: this.props.color
 		}
 
@@ -110,6 +114,14 @@ class CommentBox extends React.Component {
 			if (res.data == 'success') {
 				// get the new comment into the state so we dont have to wait for the timer
 				this.props.addCommentToState(commentObj);
+			} else if (res.data == 'invalid token') {
+				// there was an issue with the token, clear everything and alert the user
+
+					//stop the timer from trying to refresh
+					this.props.stopTokenTimer();
+
+					alert('There was a token error, please refresh.');
+					
 			}
 		}).catch(err => {
 			console.log(err);
@@ -218,7 +230,7 @@ class WelcomeModal extends React.Component {
 						<WelcomeModalUsername username={username} handleUsernameChange={this.handleUsernameChange}/>
 						<WelcomeModalColor color={color} handleColorClick={this.handleColorClick}/>
 						<br />
-						<WelcomeModalButton enterClick={this.props.enterClick} isValid={this.state.isValid}/>
+						<WelcomeModalButton enterClick={this.props.enterClick} isValid={this.state.isValid} />
 						<WelcomeModalNote username={username}/>
 					</div>
 				</div>
@@ -310,6 +322,8 @@ class UserDataComponent extends React.Component {
 		this.getComments = this.getComments.bind(this);
 		this.addCommentToState = this.addCommentToState.bind(this);
 		this.getToken = this.getToken.bind(this);
+		this.startTokenTimer = this.startTokenTimer.bind(this);
+		this.stopTokenTimer = this.stopTokenTimer.bind(this);
 		this.chatBoxRef = React.createRef();
 		this.colorArray = [
 			'#60b748', '#177ceb', '#05b6c1', '#9e9e9e', '#ffc107', '#f0e42c', '#059688', '#e21b3c', '#d3709e', '#dc6b25', '#f7ffff' // NOTE: copy of array in WelcomeModalColors component
@@ -321,12 +335,14 @@ class UserDataComponent extends React.Component {
 			comments: [],
 			showModal: true,
 			token: '',
-			activeUsers: 0
+			activeUsers: []
 		};
+		
 	}
 
 	enterClick() {
 		this.setState({showModal: false});
+		this.getToken();
 	}
 
 	settingsClick() {
@@ -349,38 +365,34 @@ class UserDataComponent extends React.Component {
 			3000
 		);
 
-		//lifecycle hook that will get a new api key every 5 minutes also then refresh the active users integer
-		
-		setInterval(
-			() => this.getToken(),
-			5 * 60 * 1000
-		);
-
 		//On component mount, make the first call to populate comments
 		this.getComments();
 
-		// make the first api call to get a token
-		this.getToken();
 	}
 
 	getComments() {
 		axios.get('/getComments')
 		.then(res => {
-			let data = res.data;
+			let dataComments = res.data.comments;
+			let dataUsernames = res.data.usernames;
+			
 
 			// only update the state if it is different from the last (new comments). this prevents the chat from scrolling to the bottom while the user is reading prevs
 			if (this.state.comments.length > 2) {
-				if (this.state.comments[0].id != data[0].id) {
-					this.setState({comments: data});
+				if (this.state.comments[0].id != dataComments[0].id) {
+					this.setState({comments: dataComments});
 
 					// use a timout function on scrollToBottom so that state has time to update this prevents the chat from scrolling to the comment above newest
 					setTimeout(() => {this.chatBoxRef.current.scrollToBottom()}, 1000)
 				}
 			} else {
 				// populate the chat box with comments for the first time
-				this.setState({comments: data});
+				this.setState({comments: dataComments});
 				this.chatBoxRef.current.scrollToBottom();
 			}
+
+			// pupulate the activeUsers state
+			this.setState({activeUsers: dataUsernames});
 			
 		})
 		.catch(err => {console.log(err)});
@@ -396,10 +408,50 @@ class UserDataComponent extends React.Component {
 	}
 
 	getToken() {
-		// function will api call the back end at /getToken and the api will return either the same token or a fresh one along with the currently active users. Set state of both
+		// function will api post call the back end at /getToken and the api will return a fresh token or renew the old one for a new. This will set the username or update it for active users too.
 
 		let token = this.state.token;
+		let username = this.state.username;
+		axios.post('/getToken', {'token': token, 'username': username})
+			.then(res => {
+
+				if (res.data.token != 'invalid token') {
+					// update the state with new token
+					this.setState({'token': res.data.token})
+
+					// start the timer to refresh the token every few minutes
+					this.startTokenTimer();
+				} else {
+					// there was an issue with the token, clear everything and alert the user
+
+					//stop the timer from trying to refresh
+					this.stopTokenTimer();
+
+					alert('There was a problem with the token, please re-enter.');
+					this.setState({
+						token: '',
+						username: '',
+						showModal: true
+					})
+					
+				}
+			}).catch(err =>{ console.log(err)});
 	}
+
+	startTokenTimer() {
+		
+		//start the timer, the var is declared in the global scope so that outside function can clear it
+		let refreshTime = 3 * 60 *1000; // refresh token every 3 minutes
+		tokenTimer = setInterval(
+				() => this.getToken(),
+				refreshTime);
+		
+	}
+
+	stopTokenTimer() {
+		clearInterval(tokenTimer);
+	}
+
 
 	render() {
 		let modal;
@@ -411,7 +463,7 @@ class UserDataComponent extends React.Component {
 			<div>
 				<AppHeader settingsClick={this.settingsClick} activeUsers={this.state.activeUsers}/>
 				<ChatBox comments={this.state.comments} colorArray={this.colorArray} ref={this.chatBoxRef}/>
-				<CommentBox color={this.state.color} username={this.state.username} addCommentToState={this.addCommentToState}/>
+				<CommentBox color={this.state.color} username={this.state.username} addCommentToState={this.addCommentToState} token={this.state.token} stopTokenTimer={this.stopTokenTimer}/>
 				{ modal }
 			</div>
 		);
