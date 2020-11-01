@@ -238,7 +238,7 @@ class WelcomeModal extends React.Component {
 		return (
 			<div className="modal-mask">
 				<div className="modal-wrapper">
-					<div className="modal-container text-center text-dark">
+					<div className="modal-container text-center">
 						{ welcomeMessage }
 						<WelcomeModalUsername username={username} handleUsernameChange={this.handleUsernameChange}/>
 						<WelcomeModalColor color={color} handleColorClick={this.handleColorClick}/>
@@ -295,7 +295,7 @@ function WelcomeModalColor(props) {
 function ColorBox(props) {
 	// the little color box that will be shown in the modal
 	let shadow = (props.stateColor == props.color) ? '0px 0px 9px blue' : null;
-	let border = (props.stateColor == props.color) ? 'blue' : 'black';
+	let border = (props.stateColor == props.color) ? '#9e9e9e' : 'black';
 
 	return <div style={{backgroundColor: props.color, boxShadow: shadow, borderColor: border}} className="color-box mr-2" onClick={e => props.handleColorClick(props.color,e)} value={props.color}></div>
 }

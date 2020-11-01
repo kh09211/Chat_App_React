@@ -91,7 +91,7 @@
 }
 
 .modal-container button {
-	box-shadow: 3px 3px 4px darkgrey;
+	box-shadow: 3px 3px 4px #101010;
 }
 
 input {
@@ -117,23 +117,34 @@ input {
 
 .modal-container {
 	width: 300px;
-	height: 342px;
+	height: 345px;
 	margin: 0px auto;
 	padding: 20px 30px;
-	background-color: #fff;
+	background-color: #212121;
 	/* border-radius: 2px; */
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
 	transition: all 0.3s ease;
 	font-family: Helvetica, Arial, sans-serif;
-	text-shadow: 3px 3px 4px darkgrey;
+	text-shadow: 3px 3px 4px black;
+	border: 2px outset #424242;
+	color: #05b6c1;
 }
 
 .modal-container h4,h3 {
-	color: #177ceb
+	color: #177ceb;
+	white-space: nowrap;
 }
 
 .modal-container input {
-	box-shadow: 3px 3px 4px gainsboro;
+	box-shadow: 3px 3px 4px #101010;
+	background-color: #101010;
+	border: 1px solid #424242;
+	color: #9e9e9e;
+}
+
+.modal-container input:focus {
+	background-color: #101010;
+	color: #9e9e9e;
 }
 
 #settings-button:hover {
@@ -141,7 +152,7 @@ input {
 }
 
 .color-box {
-	height: 15px;
+	height: 18px;
 	width: 15px;
 	border: 1px solid black;
 }
