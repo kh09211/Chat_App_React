@@ -1,9 +1,8 @@
 /****
  * 
- * need to figure out how to stop the timer from refreshing tokens while username is ''
  * Cant pick the username of an active user
  * mobile view for active users list
- * colors and bold for active usernames
+ * colors for active usernames
  * switch to production cdn 10 second job
  * 
  * 
@@ -69,7 +68,7 @@ class ChatBox extends React.Component {
 			</div>
 		));
 
-		let activeUsersList = this.props.activeUsers.map(usernameObj => <div className="pt-1" key={usernameObj.username}>{ usernameObj.username }</div>);
+		let activeUsersList = this.props.activeUsers.map(usernameObj => <div className="pt-1" key={usernameObj.username} style={{color: usernameObj.color}}>{ usernameObj.username }</div>);
 
 		
 		return (
@@ -428,7 +427,8 @@ class UserDataComponent extends React.Component {
 
 		let token = this.state.token;
 		let username = this.state.username;
-		axios.post('/getToken', {'token': token, 'username': username})
+		let color = this.state.color;
+		axios.post('/getToken', {'token': token, 'username': username, 'color': color})
 			.then(res => {
 
 				if (res.data.token != 'invalid token') {
