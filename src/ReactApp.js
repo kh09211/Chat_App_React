@@ -1,8 +1,6 @@
 /****
  * 
- * Cant pick the username of an active user
  * mobile view for active users list
- * colors for active usernames
  * switch to production cdn 10 second job
  * 
  * 
@@ -192,9 +190,12 @@ class WelcomeModal extends React.Component {
 		super(props);
 		this.handleColorClick = this.handleColorClick.bind(this);
 		this.handleUsernameChange = this.handleUsernameChange.bind(this);
+		this.isUsernameTaken = this.isUsernameTaken.bind(this); 
 		this.state = {
 			isValid: false,
-			welcomeMessage: <h4 className="py-2">Welcome to Chat App!</h4>
+			welcomeMessage: <h4 className="py-2">Welcome to Chat App!</h4>,
+			welcomeModalNoteText: '',
+			prevUsername: ''
 		};
 	}
 
@@ -203,22 +204,59 @@ class WelcomeModal extends React.Component {
 	}
 
 	handleUsernameChange(e) {
+
 		//lift up state
 		this.props.handleUsernameChange(e);
 
-		// check the validity of the username and then toggle NOTE: Same checks are in WelcomeModalNote
+
+		// check the validity of the username and then toggle
 		let username = e.target.value;
 		let regex = /^\s|[^A-Za-z0-9\s_]|\s$/g;
+		
 
-		if (username.length < 3) {
-			this.setState({isValid: false});
+		if (username.length < 3 && username != '') {
+			this.setState({
+				isValid: false,
+				welcomeModalNoteText: 'Username must be 3 or more characters in length'
+			});
 		} else if (username.length > 15) {
-			this.setState({isValid: false});
-		} else if (regex.test(username)) {
-			this.setState({isValid: false});
+			this.setState({
+				isValid: false,
+				welcomeModalNoteText: 'Username must not exceed 15 characters in length'
+			});
+		} else if (regex.test(username) && username != '') {
+			this.setState({
+				isValid: false,
+				welcomeModalNoteText: 'Name cannot start or end with a space nor contain special chars'
+			});
+		} else if (this.isUsernameTaken(username)) {
+			this.setState({
+				isValid: false,
+				welcomeModalNoteText: 'Username is already being used. Please select a different one'
+			});
+		} else if (username == '') {
+			this.setState({
+				isValid: false,
+				welcomeModalNoteText: ''
+			});
 		} else {
-			this.setState({isValid: true});
+			this.setState({
+				isValid: true,
+				welcomeModalNoteText: ''
+			});
 		}
+	}
+
+
+	isUsernameTaken(username) {
+		let activeUsers = this.props.activeUsers;
+		let usernameGoingUp = username;
+		let prevUsername = this.state.prevUsername;
+
+		// check the currently entered username against the activeUsers array's usernames
+		return  activeUsers.some(user => 
+			user.username.toLowerCase() == usernameGoingUp.toLowerCase() && user.username !== prevUsername
+			);
 	}
 
 	componentDidMount() {
@@ -227,6 +265,9 @@ class WelcomeModal extends React.Component {
 			this.setState({welcomeMessage: <h3 className="py-2">Chat Settings</h3>})
 			this.setState({isValid: true});
 		}
+
+		// set the state of the currently being used or previous username
+		this.setState({prevUsername: this.props.username});
 	}
 
 	render() {
@@ -243,7 +284,7 @@ class WelcomeModal extends React.Component {
 						<WelcomeModalColor color={color} handleColorClick={this.handleColorClick}/>
 						<br />
 						<WelcomeModalButton enterClick={this.props.enterClick} isValid={this.state.isValid} />
-						<WelcomeModalNote username={username}/>
+						<WelcomeModalNote welcomeModalNoteText={this.state.welcomeModalNoteText}/>
 					</div>
 				</div>
 			</div>
@@ -301,19 +342,9 @@ function ColorBox(props) {
 
 
 function WelcomeModalNote(props) {
-	let username = props.username;
-	let regex = /^\s|[^A-Za-z0-9\s_]|\s$/g;
+	let message = props.welcomeModalNoteText;
 
-	//NOTE: same test written in the WelcomeModal
-	if (username.length < 3 && username != '') {
-		return <div className="text-danger mt-1">Username must be 3 or more characters in length</div>
-	} else if (username.length > 15) {
-		return <div className="text-danger mt-1">Username must not exceed 15 characters in length</div>
-	} else if (regex.test(username) && username != '') {	
-		return <div className="text-danger mt-1">Name cannot start or end with a space nor contain special chars</div>
-	} else {
-		return null;
-	}
+	return <div className="text-danger mt-1">{ message }</div>
 }
 
 function WelcomeModalButton(props) {
@@ -476,7 +507,7 @@ class UserDataComponent extends React.Component {
 		let modal;
 		let showModal = this.state.showModal;
 		if (showModal) {
-			modal = <WelcomeModal enterClick={this.enterClick} username={this.state.username} color={this.state.color} colorClick={this.colorClick} handleUsernameChange={this.usernameChange}/>;
+			modal = <WelcomeModal enterClick={this.enterClick} username={this.state.username} color={this.state.color} colorClick={this.colorClick} handleUsernameChange={this.usernameChange} activeUsers={this.state.activeUsers} />;
 		}
 		return (
 			<div>
