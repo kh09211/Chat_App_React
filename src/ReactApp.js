@@ -1,7 +1,9 @@
 /****
  * 
+ * need to figure out how to stop the timer from refreshing tokens while username is ''
  * Cant pick the username of an active user
- * active users flexbox with a gutter, mobile view will have something different or one...
+ * mobile view for active users list
+ * colors and bold for active usernames
  * switch to production cdn 10 second job
  * 
  * 
@@ -24,13 +26,13 @@ class AppHeader extends React.Component {
 	render() {
 		
 		return (
-			<div id="header" className="container-xl">
+			<div id="header" className="container-fluid">
 				<div className="row justify-content-between px-4">
 					<div className="d-flex">
 						<div className="h4 text-light ml-2">Chat App</div>
 						<div id="settings-button" className="ml-4 text-light" onClick={this.props.settingsClick}><i className="fas fa-user-cog pt-1"></i></div>
 					</div>
-					<div className="text-right text-light mr-2">Active Users: { this.props.activeUsers.length }</div>
+					<div className="text-right text-light mr-2 mr-md-4">Active Users: { this.props.activeUsers.length }</div>
 				</div>
 			</div>
 		);
@@ -58,20 +60,31 @@ class ChatBox extends React.Component {
 		let comments = this.props.comments;
 		let mappedComments = comments.map((comment) => (
 			<div id="comment-row" className="row pt-1" key={comment.id}>
-				<div className="col-md-2">
+				<div className="col-md-3 col-xl-2">
 					<div className="pl-4" style={ {color: comment.color} }><strong>{ comment.username }:</strong></div>
 				</div>
-				<div className="col-md-10">
-					<div id="comment-message" className="pl-3 mr-2">{ comment.comment }</div>
+				<div className="col-md-9 col-xl-10">
+					<div id="comment-message" className="pl-3 pl-md-0 mr-2">{ comment.comment }</div>
 				</div>
 			</div>
 		));
 
+		let activeUsersList = this.props.activeUsers.map(usernameObj => <div className="pt-1" key={usernameObj.username}>{ usernameObj.username }</div>);
+
 		
 		return (
-			<div id="chatbox" className="container-xl">
-				{ mappedComments }
-				<div id="scroll-to-bottom-div" style={{ height: "7px" }} ref={this.messagesEndRef}></div>
+			<div id="chatbox" className="container-fluid px-0">
+				<div className="row ">
+					<div className="grid-left col-12 col-md-9 col-lg-10">
+						{ mappedComments }
+						<div id="scroll-to-bottom-div" style={{ height: "7px" }} ref={this.messagesEndRef}></div>
+					</div>
+					<div className="grid-right col-3 col-lg-2 d-none d-md-flex">
+						<div className="text-light mt-2 text-center w-100">
+							{ activeUsersList }
+						</div>
+					</div>
+				</div>
 			</div>
 		);
 	}
@@ -133,7 +146,7 @@ class CommentBox extends React.Component {
 
 	render() {
 		return (
-			<div id="commentbox" className="container-xl px-0">
+			<div id="commentbox" className="container-fluid px-0">
 				<div className="row no-gutters">
 					<div className="col-md-10">
 						<CommentInput comment={this.state.comment} handleChange={this.handleCommentChange} handleSubmit={this.handleSubmit}/>
@@ -161,7 +174,7 @@ function CommentInput(props) {
 	}
 
 
-	return <input type="text" className="form-control w-100" placeholder="Write a comment" onChange={handleChange} value={props.comment} onKeyPress={handleKeyPress} maxLength="225"/>;
+	return <input id="comment-input-box" type="text" className="form-control w-100" placeholder="Write a comment" onChange={handleChange} value={props.comment} onKeyPress={handleKeyPress} maxLength="225"/>;
 }
 
 function CommentSubmitButton(props) {
@@ -171,7 +184,7 @@ function CommentSubmitButton(props) {
 		props.handleSubmit();
 	}
 
-	return <button className="btn btn-primary w-100" onClick={handleSubmitClick}disabled={props.comment == ''}>Submit</button>;
+	return <button className="btn btn-primary text-nowrap w-100" onClick={handleSubmitClick}disabled={props.comment == ''}>Send Comment</button>;
 }
 
 class WelcomeModal extends React.Component {
@@ -343,6 +356,9 @@ class UserDataComponent extends React.Component {
 	enterClick() {
 		this.setState({showModal: false});
 		this.getToken();
+
+		// start the timer to refresh the token every few minutes
+		this.startTokenTimer();
 	}
 
 	settingsClick() {
@@ -419,8 +435,6 @@ class UserDataComponent extends React.Component {
 					// update the state with new token
 					this.setState({'token': res.data.token})
 
-					// start the timer to refresh the token every few minutes
-					this.startTokenTimer();
 				} else {
 					// there was an issue with the token, clear everything and alert the user
 
@@ -429,8 +443,6 @@ class UserDataComponent extends React.Component {
 
 					alert('There was a problem with the token, please re-enter.');
 					this.setState({
-						token: '',
-						username: '',
 						showModal: true
 					})
 					
@@ -449,7 +461,14 @@ class UserDataComponent extends React.Component {
 	}
 
 	stopTokenTimer() {
+		// there was an issue, clear everything out
 		clearInterval(tokenTimer);
+		tokenTimer = '';
+		this.setState({
+			activeUsers: [],
+			token: '',
+			username: ''
+		});
 	}
 
 
@@ -462,7 +481,7 @@ class UserDataComponent extends React.Component {
 		return (
 			<div>
 				<AppHeader settingsClick={this.settingsClick} activeUsers={this.state.activeUsers}/>
-				<ChatBox comments={this.state.comments} colorArray={this.colorArray} ref={this.chatBoxRef}/>
+				<ChatBox comments={this.state.comments} colorArray={this.colorArray} ref={this.chatBoxRef} activeUsers={this.state.activeUsers} />
 				<CommentBox color={this.state.color} username={this.state.username} addCommentToState={this.addCommentToState} token={this.state.token} stopTokenTimer={this.stopTokenTimer}/>
 				{ modal }
 			</div>
@@ -475,7 +494,7 @@ class UserDataComponent extends React.Component {
 const domContainer = document.querySelector('#app');
 ReactDOM.render(
 
-	<div className="container-xl px-0">
+	<div className="container-fluid">
 		<UserDataComponent />
 	</div>
 

@@ -2,12 +2,6 @@
 	background-color: #212121;
 }
 
-.navbar {
-	background-color: #212121;
-	
-}
-
-
 #header {
 	height: 55px;
 	z-index: 10;
@@ -19,17 +13,43 @@
 }
 
 #chatbox {
+	
+	
+	
+
+	
+	
+}
+
+#chatbox .grid-left {
+	/* will contain the chat comments */
+
 	background-color: #101010;
 	position: absolute;
-	bottom: 38px;
+	bottom: 39px;
 	top: 55px;
 	z-index: 5;
-	
 
 	/* added for scroll to bottom functionality */
 	overflow-y: auto;
 	word-wrap: break-word;
-	
+}
+
+#chatbox .grid-right {
+	/* will contain the active users */
+
+	background-color: #101010;
+	position: absolute;
+	bottom: 38px;
+	top: 55px;
+	right: 0px;
+	z-index: 5;
+	border-left: 2px solid #212121;
+
+	/* added for scroll to bottom functionality */
+	overflow-y: auto;
+	overflow-x: hidden;
+	word-wrap: nowrap;
 }
 
 #comment-row .col-md-2 {
@@ -41,7 +61,10 @@
 	bottom: 0;
 	right: 0;
 	left: 0;
+}
 
+#comment-input-box {
+	
 }
 
 #comment-message {
@@ -49,8 +72,8 @@
 }
 
 @media screen and (max-width: 768px) {
-	#chatbox {
-		bottom: 78px;
+	#chatbox .grid-left {
+		bottom: 76px;
 		margin-bottom: 0px
 	}
 	#comment-message {
