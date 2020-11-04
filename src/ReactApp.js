@@ -1,10 +1,7 @@
 /****
  * 
  * activeuserslist dropdown transition
- * Welcome modal uses the slug name as the chat id parsed
- * slug sanitized then saved into userdatacomponent and sent with api calls
- * if no comments yet show a welcome note
- * index for id, token, room in the database
+ * set up a delete system when rows over x ^^^
  * switch to production cdn 10 second job
  * 
  * 
@@ -82,15 +79,21 @@ class ChatBox extends React.Component {
 		return (
 			<div id="chatbox" className="container-fluid px-0">
 				<div className="row ">
-					<div className="grid-left col-12 col-md-9 col-lg-10">
+
+
+					<div className="grid-left col-12 col-md-9 col-lg-10 pt-2">
 						{ mappedComments }
 						<div id="scroll-to-bottom-div" style={{ height: "7px" }} ref={this.messagesEndRef}></div>
 					</div>
+
+
 					<div className="grid-right col-3 col-lg-2 d-none d-md-flex">
 						<div className="text-light mt-2 text-center w-100">
 							{ activeUsersList }
 						</div>
 					</div>
+
+
 				</div>
 			</div>
 		);
@@ -220,7 +223,7 @@ class WelcomeModal extends React.Component {
 		this.isUsernameTaken = this.isUsernameTaken.bind(this); 
 		this.state = {
 			isValid: false,
-			welcomeMessage: <h4 className="py-2">Welcome to Chat App!</h4>,
+			welcomeMessage: <h5 className="pt-3">Welcome to</h5>,
 			welcomeModalNoteText: '',
 			prevUsername: ''
 		};
@@ -289,8 +292,9 @@ class WelcomeModal extends React.Component {
 
 	componentDidMount() {
 		// On component mount, change the welcome message & enable button
+		
 		if (this.props.username != '') {
-			this.setState({welcomeMessage: <h3 className="py-2">Chat Settings</h3>})
+			this.setState({welcomeMessage: <h5 className="pt-2">Chat Settings</h5>})
 			this.setState({isValid: true});
 		}
 
@@ -302,12 +306,17 @@ class WelcomeModal extends React.Component {
 		let welcomeMessage = this.state.welcomeMessage;
 		let username = this.props.username;
 		let color = this.props.color;
+		let roomNameParsed = this.props.room.replace(/_/g,' ');
+		let room = <h4 className="text-nowrap" >{ roomNameParsed }</h4>;
 		
 		return (
 			<div className="modal-mask">
 				<div className="modal-wrapper">
 					<div className="modal-container text-center">
-						{ welcomeMessage }
+						<div style={{maxWidth: '295px'}}>
+							{ welcomeMessage }
+							{ room }
+						</div>
 						<WelcomeModalUsername username={username} handleUsernameChange={this.handleUsernameChange}/>
 						<WelcomeModalColor color={color} handleColorClick={this.handleColorClick}/>
 						<br />
@@ -327,7 +336,7 @@ function WelcomeModalUsername(props) {
 		props.handleUsernameChange(e);
 	}
 	return (
-	<div className="mt-3">
+	<div className="mt-3 row justify-content-center">
 		<label>Choose a Username </label>
 		<input type="text" value={props.username} className="form-control" onChange={handleUsernameChange} maxLength="15"/>
 	</div>
@@ -350,7 +359,7 @@ function WelcomeModalColor(props) {
 	}
 
 	return (
-		<div className="mt-3">
+		<div className="mt-3 row justify-content-center">
 			<label>Choose a Color</label><br />
 			<div className="d-flex text-center">
 				{colorList}
@@ -372,13 +381,13 @@ function ColorBox(props) {
 function WelcomeModalNote(props) {
 	let message = props.welcomeModalNoteText;
 
-	return <div className="text-danger mt-1">{ message }</div>
+	return <div className="text-danger mt-1 px-3">{ message }</div>
 }
 
 function WelcomeModalButton(props) {
 	// disables and enables the button based on the reactive username input validity
 	
-	return <button className="btn btn-primary mt-2" onClick={props.enterClick} disabled={!props.isValid}>Go to chat!</button>;
+	return <button className="btn btn-primary mt-3" onClick={props.enterClick} disabled={!props.isValid}>Go to chat!</button>;
 }
 
 function AboutModal(props) {
@@ -396,7 +405,7 @@ function AboutModal(props) {
 
 					<div className="my-2" style={{color: '#059688'}}>selfdestruct.chat<span style={{color: '#e21b3c'}}>/super_secret_chat</span></div>
 
-					<div>creates and enters a chat room named Super Secret Chat. Use underscores _ or periods . where you want spaces in your chat's name. Chat room names are not searchable.</div>
+					<div>creates and enters a chat room named Super Secret Chat. Use underscores _ or periods . where you want spaces in your chat's name. Chat room names are not searchable and can be up to 22 characters in length.</div>
 
 					<div className="mt-3">So long as there is at least 1 active user in the room, new users can join the conversation using the url link above. Once the last user closes their browser, that chat room is purged from the database along with all comments and associated usernames.</div>
 
@@ -490,8 +499,19 @@ class UserDataComponent extends React.Component {
 	getComments() {
 		axios.get('/getComments/' + this.state.room)
 		.then(res => {
-			let dataComments = res.data.comments;
+			let roomNameParsed = this.state.room.replace(/_/g,' ');
+			// welcome note to be sent to state if comment rows come back empty
+			let welcomeNoteObj = {
+				id: 1,
+				username: 'Welcome Note',
+				color: '#05b6c1',
+				comment: 'Welcome to ' + roomNameParsed +'! This chat will self-destruct once left empty.'
+			}
 			let dataUsernames = res.data.usernames;
+			let dataComments = (res.data.comments.length == 0) ? [welcomeNoteObj] : res.data.comments ;
+			
+			
+
 
 			// only update the state if it is different from the last (new comments). this prevents the chat from scrolling to the bottom while the user is reading prevs
 			if (this.state.comments.length > 2) {
@@ -588,7 +608,7 @@ class UserDataComponent extends React.Component {
 	}
 
 	getRoomSlug() {
-		let regex = /[A-Za-z0-9-._~]+/gi;
+		let regex = /[A-Za-z0-9-._~]{1,22}/gi;
 		let path = window.location.pathname;
 		let sanitizedPath = (path.match(regex)) ? path.match(regex)[0] : 'Self-Destruct_Chat';
 
@@ -602,7 +622,7 @@ class UserDataComponent extends React.Component {
 		let showActiveUsersDropdown = this.state.showActiveUsersDropdown;
 		let showAboutModal = this.state.showAboutModal;
 		if (showModal) {
-			modal = <WelcomeModal enterClick={this.enterClick} username={this.state.username} color={this.state.color} colorClick={this.colorClick} handleUsernameChange={this.usernameChange} activeUsers={this.state.activeUsers} />;
+			modal = <WelcomeModal enterClick={this.enterClick} username={this.state.username} color={this.state.color} colorClick={this.colorClick} handleUsernameChange={this.usernameChange} activeUsers={this.state.activeUsers} room={this.state.room}/>;
 		}
 		if (showActiveUsersDropdown) {
 			modal = <ActiveUsersDropdown activeUsers={this.state.activeUsers} />;
