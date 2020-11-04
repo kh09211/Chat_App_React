@@ -1,6 +1,10 @@
 /****
  * 
- * mobile view for active users list
+ * activeuserslist dropdown transition
+ * Welcome modal uses the slug name as the chat id parsed
+ * slug sanitized then saved into userdatacomponent and sent with api calls
+ * if no comments yet show a welcome note
+ * index for id, token, room in the database
  * switch to production cdn 10 second job
  * 
  * 
@@ -21,15 +25,24 @@ class AppHeader extends React.Component {
 	}
 
 	render() {
-		
+		let showActiveUsersDropdown = this.props.showActiveUsersDropdown;
+		let audArrow;
+		if (showActiveUsersDropdown) {
+			audArrow = <i className="fas fa-caret-up text-light ml-4 mt-n5 d-md-none"></i>;
+		} else {
+			audArrow = <i className="fas fa-caret-down text-light ml-4 mt-n5 d-md-none"></i>;
+		}
 		return (
 			<div id="header" className="container-fluid">
-				<div className="row justify-content-between px-4">
+				<div className="row justify-content-between px-0 px-md-4">
 					<div className="d-flex">
-						<div className="h4 text-light ml-2">Chat App</div>
-						<div id="settings-button" className="ml-4 text-light" onClick={this.props.settingsClick}><i className="fas fa-user-cog pt-1"></i></div>
+						<div className="h4 text-light ml-0 ml-md-2 title" onClick={this.props.toggleAboutModal}><i>Self-Destruct</i></div>
+						<div id="settings-button" className="ml-3 text-light" onClick={this.props.settingsClick}><i className="fas fa-user-cog pt-1"></i></div>
 					</div>
-					<div className="text-right text-light mr-2 mr-md-4">Active Users: { this.props.activeUsers.length }</div>
+					<div id="active-users-div" className="mt-0 " onClick={this.props.toggleActiveUsersDropdown}>
+						<div className="text-right text-light mr-1 mr-md-4 mb-n2 mt-md-0">Online: <span className="ml-1">{ this.props.activeUsers.length }</span></div>
+						<div>{ audArrow }</div>
+					</div>
 				</div>
 			</div>
 		);
@@ -42,9 +55,6 @@ class ChatBox extends React.Component {
 		super(props);
 		this.scrollToBottom = this.scrollToBottom.bind(this);
 		this.messagesEndRef = React.createRef()
-		this.state = {
-		
-		}
 	}
 
 	scrollToBottom() {
@@ -87,6 +97,22 @@ class ChatBox extends React.Component {
 	}
 }
 
+class ActiveUsersDropdown extends React.Component {
+	constructor(props) {
+		super(props);
+	}
+
+	render() {
+		let activeUsersList = this.props.activeUsers.map(usernameObj => <div className="pt-1" key={usernameObj.username} style={{color: usernameObj.color}}>{ usernameObj.username }</div>);
+
+		return (
+			<div className="active-users-dropdown text-center">
+				{ activeUsersList }
+			</div>
+		);
+	}
+}
+
 class CommentBox extends React.Component {
 	// contains the components of the input box and the submit button. 
 	constructor(props) {
@@ -114,7 +140,8 @@ class CommentBox extends React.Component {
 			username: this.props.username,
 			comment: this.state.comment,
 			token: this.props.token,
-			color: this.props.color
+			color: this.props.color,
+			room: this.props.room
 		}
 
 		
@@ -259,6 +286,7 @@ class WelcomeModal extends React.Component {
 			);
 	}
 
+
 	componentDidMount() {
 		// On component mount, change the welcome message & enable button
 		if (this.props.username != '') {
@@ -353,6 +381,34 @@ function WelcomeModalButton(props) {
 	return <button className="btn btn-primary mt-2" onClick={props.enterClick} disabled={!props.isValid}>Go to chat!</button>;
 }
 
+function AboutModal(props) {
+	
+	return (
+		<div className="modal-mask" onClick={props.toggleAboutModal}>
+			<div className="">
+				<div className="text-right text-md-center w-100">
+					<div className="mt-0 pr-1 pt-3 px-1 text-warning h5 click-to-close"><strong>Click to Close</strong></div>
+				</div>
+				<div className="about-modal-container text-center">
+					<div className="h5 mt-md-2">How does this work?</div>
+
+					<div>The application creates chat rooms based on the <span style={{color: '#e21b3c'}}>/url</span> given and will self-destruct once the last user leaves. That is to say that the app does not log or save any chat data once the room becomes empty. A new chat can be easily created using what is called a url slug. For example: </div>
+
+					<div className="my-2" style={{color: '#059688'}}>selfdestruct.chat<span style={{color: '#e21b3c'}}>/super_secret_chat</span></div>
+
+					<div>creates and enters a chat room named Super Secret Chat. Use underscores _ or periods . where you want spaces in your chat's name. Chat room names are not searchable.</div>
+
+					<div className="mt-3">So long as there is at least 1 active user in the room, new users can join the conversation using the url link above. Once the last user closes their browser, that chat room is purged from the database along with all comments and associated usernames.</div>
+
+					<div className="h5 mt-3 mb-2">About</div>
+
+					<div className="pb-4">The Self-Destruct chat app was developed by programmer Kyle Hopkins using Node, Express, and React Javascript libraries. If you are interested in hiring me for development work or to join your team, please contact me <a href="https://kyleweb.dev/#contact">here.</a></div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
 
 class UserDataComponent extends React.Component {
 	//this component is a wrapper for the app which will contain the common user state
@@ -367,6 +423,9 @@ class UserDataComponent extends React.Component {
 		this.getToken = this.getToken.bind(this);
 		this.startTokenTimer = this.startTokenTimer.bind(this);
 		this.stopTokenTimer = this.stopTokenTimer.bind(this);
+		this.toggleActiveUsersDropdown = this.toggleActiveUsersDropdown.bind(this);
+		this.toggleAboutModal = this.toggleAboutModal.bind(this);
+		this.getRoomSlug = this.getRoomSlug.bind(this);
 		this.chatBoxRef = React.createRef();
 		this.colorArray = [
 			'#60b748', '#177ceb', '#05b6c1', '#9e9e9e', '#ffc107', '#f0e42c', '#059688', '#e21b3c', '#d3709e', '#dc6b25', '#f7ffff' // NOTE: copy of array in WelcomeModalColors component
@@ -377,8 +436,11 @@ class UserDataComponent extends React.Component {
 			color: this.colorArray[Math.floor((Math.random() * (this.colorArray.length)))],
 			comments: [],
 			showModal: true,
+			showActiveUsersDropdown: false,
+			showAboutModal: false,
 			token: '',
-			activeUsers: []
+			activeUsers: [],
+			room: ''
 		};
 		
 	}
@@ -392,7 +454,11 @@ class UserDataComponent extends React.Component {
 	}
 
 	settingsClick() {
-		this.setState({showModal: true});
+		//closes the active users dropdown if it is open
+		this.setState({
+			showActiveUsersDropdown: false,
+			showModal: true
+		});
 	}
 
 	colorClick(color, e) {
@@ -404,6 +470,14 @@ class UserDataComponent extends React.Component {
 	}
 
 	componentDidMount() {
+
+		//on mount, get the room slug and keep it in state
+		this.getRoomSlug();
+
+		//On component mount, make the first call to populate comments but do it with 0.1s timeout so that state has a chance to update the room name
+		setTimeout(() => {this.getComments()}, 100);
+		
+		
 		//lifecycle hook that will continuously call the function that makes an api call to the back end and re-renderes the updated state every 3 seconds
 		
 		setInterval(
@@ -411,17 +485,13 @@ class UserDataComponent extends React.Component {
 			3000
 		);
 
-		//On component mount, make the first call to populate comments
-		this.getComments();
-
 	}
 
 	getComments() {
-		axios.get('/getComments')
+		axios.get('/getComments/' + this.state.room)
 		.then(res => {
 			let dataComments = res.data.comments;
 			let dataUsernames = res.data.usernames;
-			
 
 			// only update the state if it is different from the last (new comments). this prevents the chat from scrolling to the bottom while the user is reading prevs
 			if (this.state.comments.length > 2) {
@@ -459,7 +529,8 @@ class UserDataComponent extends React.Component {
 		let token = this.state.token;
 		let username = this.state.username;
 		let color = this.state.color;
-		axios.post('/getToken', {'token': token, 'username': username, 'color': color})
+		let room = this.state.room
+		axios.post('/getToken', {'token': token, 'username': username, 'color': color, 'room': room})
 			.then(res => {
 
 				if (res.data.token != 'invalid token') {
@@ -502,18 +573,48 @@ class UserDataComponent extends React.Component {
 		});
 	}
 
+	toggleActiveUsersDropdown() {
+		// toggle the visibility of the active users dropdown if in mobile view (md bootstrap size)
+		
+		if (window.innerWidth < 768) {
+			this.setState({ showActiveUsersDropdown: !this.state.showActiveUsersDropdown});
+		}
+	}
+
+	toggleAboutModal() {
+		// toggle the visibility of the about modal
+
+		this.setState({showAboutModal: !this.state.showAboutModal});
+	}
+
+	getRoomSlug() {
+		let regex = /[A-Za-z0-9-._~]+/gi;
+		let path = window.location.pathname;
+		let sanitizedPath = (path.match(regex)) ? path.match(regex)[0] : 'Self-Destruct_Chat';
+
+		this.setState({room: sanitizedPath});
+	}
+
 
 	render() {
 		let modal;
 		let showModal = this.state.showModal;
+		let showActiveUsersDropdown = this.state.showActiveUsersDropdown;
+		let showAboutModal = this.state.showAboutModal;
 		if (showModal) {
 			modal = <WelcomeModal enterClick={this.enterClick} username={this.state.username} color={this.state.color} colorClick={this.colorClick} handleUsernameChange={this.usernameChange} activeUsers={this.state.activeUsers} />;
 		}
+		if (showActiveUsersDropdown) {
+			modal = <ActiveUsersDropdown activeUsers={this.state.activeUsers} />;
+		}
+		if (showAboutModal) {
+			modal = <AboutModal toggleAboutModal={this.toggleAboutModal}/>;
+		}
 		return (
 			<div>
-				<AppHeader settingsClick={this.settingsClick} activeUsers={this.state.activeUsers}/>
+				<AppHeader settingsClick={this.settingsClick} activeUsers={this.state.activeUsers} toggleActiveUsersDropdown={this.toggleActiveUsersDropdown} showActiveUsersDropdown={this.state.showActiveUsersDropdown} toggleAboutModal={this.toggleAboutModal} />
 				<ChatBox comments={this.state.comments} colorArray={this.colorArray} ref={this.chatBoxRef} activeUsers={this.state.activeUsers} />
-				<CommentBox color={this.state.color} username={this.state.username} addCommentToState={this.addCommentToState} token={this.state.token} stopTokenTimer={this.stopTokenTimer}/>
+				<CommentBox color={this.state.color} username={this.state.username} addCommentToState={this.addCommentToState} token={this.state.token} stopTokenTimer={this.stopTokenTimer} room={this.state.room}/>
 				{ modal }
 			</div>
 		);
