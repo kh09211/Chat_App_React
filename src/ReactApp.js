@@ -405,7 +405,7 @@ function AboutModal(props) {
 
 					<div className="my-2" style={{color: '#059688'}}>selfdestruct.chat<span style={{color: '#e21b3c'}}>/super_secret_chat</span></div>
 
-					<div>creates and enters a chat room named Super Secret Chat. Use underscores _ or periods . where you want spaces in your chat's name. Chat room names are not searchable and can be up to 22 characters in length.</div>
+					<div>creates and enters a chat room named Super Secret Chat. Use underscores _ where you want spaces to be in your chat's name. Chat room names are not searchable and can be up to 22 characters in length.</div>
 
 					<div className="mt-3">So long as there is at least 1 active user in the room, new users can join the conversation using the url link above. Once the last user closes their browser, that chat room is purged from the database along with all comments and associated usernames.</div>
 
@@ -505,7 +505,7 @@ class UserDataComponent extends React.Component {
 				id: 1,
 				username: 'Welcome Note',
 				color: '#05b6c1',
-				comment: 'Welcome to ' + roomNameParsed +'! This chat will self-destruct once left empty.'
+				comment: 'Welcome to ' + roomNameParsed +'! This chat will self-destruct if left empty for more than a few minutes. To prevent auto-erasure, keep this window open if you are the last user. If you would like others to join, just share the URL link! To create a new room, just change the link to /new_room_name. For more info, click on Self-Destruct above.'
 			}
 			let dataUsernames = res.data.usernames;
 			let dataComments = (res.data.comments.length == 0) ? [welcomeNoteObj] : res.data.comments ;
