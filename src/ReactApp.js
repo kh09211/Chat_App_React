@@ -515,7 +515,7 @@ class UserDataComponent extends React.Component {
 
 			// only update the state if it is different from the last (new comments). this prevents the chat from scrolling to the bottom while the user is reading prevs
 			if (this.state.comments.length > 2) {
-				if (this.state.comments[0].id != dataComments[0].id) {
+				if (this.state.comments[this.state.comments.length - 1].id != dataComments[dataComments.length - 1].id) {
 					this.setState({comments: dataComments});
 
 					// use a timout function on scrollToBottom so that state has time to update this prevents the chat from scrolling to the comment above newest
