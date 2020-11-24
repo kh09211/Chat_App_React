@@ -1,11 +1,9 @@
 /****
- * 
- * activeuserslist dropdown transition
- * private chat???
- * switch to production cdn 10 second job
- * 
- * 
+ *  
  * The Chat App written by programmer Kyle Hopkins using React, Node, and Express
+ * 
+ * todo: activeuserslist dropdown transition
+ * 
  */
 
 
